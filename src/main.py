@@ -23,20 +23,19 @@ cols=rows
 # PART 2: create the crossroads with the occupation matrix  *
 #                                                           *
 # ***********************************************************
+
 print("\n>> Creating the crossroads...")
 
 create_occ = Occupation(rows, cols)
 occupation_matrix = create_occ.create_occupation_matrix()
 print(occupation_matrix)
 
-
-
-
 # ***********************************************************
 #                                                           *
 # PART 3: ask number of cars on the crossroads              *
 #                                                           *
 # ***********************************************************
+
 num_cars = int(input("\n>> How many cars do you want to insert? Answer: "))
 while num_cars<1 or num_cars>(np.count_nonzero(occupation_matrix == 0)): 
     num_cars = int(input("Wrong value! Insert again: "))
@@ -62,7 +61,6 @@ for i in range(len(new_positions)):
     diag[new_positions[i]]=1
 diag_matrix=np.diag(diag)
 
-
 # ***********************************************************
 #                                                           *
 # PART 4: Visibility matrix construction                    *
@@ -83,6 +81,7 @@ print("\nActual Visibility Matrix:\n", matrix)
 # PART 5: Linear Programming Optimization                   *
 #                                                           *
 # ***********************************************************
+
 capacity = int(input("\nInsert max capacity..."))
 
 print("\nMaximum Capacity = ", capacity)

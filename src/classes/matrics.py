@@ -2,14 +2,22 @@ import math
 import random
 import numpy as np
 
+
+# global useful variables
 car = 1
 buildings = -1
 road = 0
 
-there_is_the_car = 1 #None 
+there_is_the_car = 1
 not_see = 0
 can_see = 1
 
+# ############################################ #
+#   Definition of the class Matrix             #
+#                           ^    ^             #
+#                           |    |             #
+# and subclasses     Occupancy  Visibility     #
+# ############################################ #
 
 class Matrix:
 
@@ -25,8 +33,7 @@ class Visibility(Matrix):
     def __init__(self, rows, cols):
         super().__init__(rows*rows, cols*cols)
 
-    
-
+    # function that create the visibility matrix of a single cell
     def create_single_visibility(self, coordinates, occ_matrix):
         occupation_base = (occ_matrix).tolist()
         starting_pos_i = coordinates[0]
@@ -35,92 +42,201 @@ class Visibility(Matrix):
         dim_cols = int(math.sqrt(self.cols))
         visibility_matrix = [[0] * dim_cols for _ in range(dim_rows)]
 
-        #insert car position
+        #insert car/road position (1 or 0)
         visibility_matrix[starting_pos_i][starting_pos_j] = there_is_the_car
 
-        #print("******* car coordinates: ", coordinates, "\n")
-        #print("\noccupation:\n", np.array(occupation_base), "\nvisibility:\n", np.array(visibility_matrix))
-
-
-
-        #'''
-        # scorro la riga dopo la cella
-        # print("riga dopo la cella...")
+        # set the visibility for all cells that are in the same row and to the right of the input cell
         x = starting_pos_j + 1
         found_b = False
         while x < dim_cols:
             cell = occupation_base[starting_pos_i][x]
-            # print("cell: ", cell)
             if found_b:
-                visibility_matrix[starting_pos_i][x] = 0
+                visibility_matrix[starting_pos_i][x] = not_see
             else:
                 if cell == -1:
-                    visibility_matrix[starting_pos_i][x] = 0
+                    visibility_matrix[starting_pos_i][x] = not_see
                     found_b = True
                 if cell == 1 or cell == 0:
-                    visibility_matrix[starting_pos_i][x] = 1
+                    visibility_matrix[starting_pos_i][x] = can_see
             x += 1
 
-        # scorro la riga prima della cella
-        # print("riga prima della cella...")
+        # set the visibility for all cells that are in the same row and to the left of the input cell
         x = starting_pos_j - 1
         found_b = False
         while x >= 0:
             cell = occupation_base[starting_pos_i][x]
-            # print("cell: ", cell)
             if found_b:
-                visibility_matrix[starting_pos_i][x] = 0
+                visibility_matrix[starting_pos_i][x] = not_see
             else:
                 if cell == -1:
-                    visibility_matrix[starting_pos_i][x] = 1
+                    visibility_matrix[starting_pos_i][x] = not_see
                     found_b = True
                 if cell == 1 or cell == 0:
-                    visibility_matrix[starting_pos_i][x] = 1
+                    visibility_matrix[starting_pos_i][x] = can_see
             x -= 1
 
-        # scorro la colonna dopo la cella
-        # print("colonna dopo della cella...")
-        i = starting_pos_j + 1
-        count = 0
-        while i < dim_cols:
-            x = starting_pos_i + 1 + count
-            #print("x value = ",x, "count value = ", count)
-            found_b = False
-            while x < dim_rows:
-                cell = occupation_base[x][starting_pos_j + count]
-                #print("cell coordinates[",x,",",(starting_pos_j + count), "] => value = ", cell)
-                if found_b:
-                    visibility_matrix[x-count][starting_pos_j + count] = 0
-                else:
-                    if cell == -1:
-                        visibility_matrix[x-count][starting_pos_j + count] = 1
-                        found_b = True
-                    if cell == 1 or cell == 0:
-                        visibility_matrix[x-count][starting_pos_j + count] = 1
-                x += 1
-            i+=1
-            count+=1
+        # sets the visibility for all cells that are in the same column and below the input cell
+        found_b = False
+        x = starting_pos_i + 1
+        while x < dim_rows:
+            cell = occupation_base[x][starting_pos_j]
+            if found_b:
+                visibility_matrix[x][starting_pos_j] = not_see
+            else:
+                if cell == -1:
+                    visibility_matrix[x][starting_pos_j] = not_see
+                    found_b = True
+                if cell == 1 or cell == 0:
+                    visibility_matrix[x][starting_pos_j] = can_see
+            x += 1
 
-        # scorro la colonna prima della cella
-        # print("colonna prima della cella...")
+
+        # sets the visibility for all cells that are in the same column and above the input cell
         x = starting_pos_i - 1
         found_b = False
         while x >= 0:
             cell = occupation_base[x][starting_pos_j]
-            # print("cell: ", cell)
             if found_b:
-                visibility_matrix[x][starting_pos_j] = 0
+                visibility_matrix[x][starting_pos_j] = not_see
             else:
                 if cell == -1:
-                    visibility_matrix[x][starting_pos_j] = 1
+                    visibility_matrix[x][starting_pos_j] = not_see
                     found_b = True
                 if cell == 1 or cell == 0:
-                    visibility_matrix[x][starting_pos_j] = 1
+                    visibility_matrix[x][starting_pos_j] = can_see
             x -= 1
+
+        # sets the visibility for all cells that are in the previous row and to the left of the input cell
+        if (starting_pos_j - 1 >= 0 and starting_pos_i - 1 >= 0):
+            x = starting_pos_j - 1
+            found_b = False
+            while x >= 0:
+                cell = occupation_base[starting_pos_i - 1][x]
+                if found_b:
+                    visibility_matrix[starting_pos_i - 1][x] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[starting_pos_i - 1][x] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[starting_pos_i - 1][x] = can_see
+                x -= 1
+
+        # sets the visibility for all cells that are in the next row and to the left of the input cell
+        if (starting_pos_j - 1 >= 0 and starting_pos_i + 1 < dim_rows):
+            x = starting_pos_j - 1
+            found_b = False
+            while x >= 0:
+                cell = occupation_base[starting_pos_i + 1][x]
+                if found_b:
+                    visibility_matrix[starting_pos_i + 1][x] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[starting_pos_i + 1][x] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[starting_pos_i + 1][x] = can_see
+                x -= 1
+
+        # sets the visibility for all cells that are in the next column and above the given input cell
+        if (starting_pos_i-1>=0 and starting_pos_j + 1 < dim_rows):
+            x = starting_pos_i - 1
+            found_b = False
+            while x >= 0:
+                cell = occupation_base[x][starting_pos_j + 1]
+                if found_b:
+                    visibility_matrix[x][starting_pos_j + 1] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[x][starting_pos_j + 1] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[x][starting_pos_j + 1] = can_see
+                x -= 1
+
+        # sets the visibility for all cells that are in the previous column and above the given input cell
+        if (starting_pos_i-1>=0 and starting_pos_j - 1 >= 0):
+            x = starting_pos_i - 1
+            found_b = False
+            while x >= 0:
+                cell = occupation_base[x][starting_pos_j - 1]
+                if found_b:
+                    visibility_matrix[x][starting_pos_j - 1] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[x][starting_pos_j - 1] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[x][starting_pos_j - 1] = can_see
+                x -= 1
+
+        # sets the visibility for all cells that are in the previous column and below the given input cell
+        if (starting_pos_i + 1 < dim_rows and starting_pos_j - 1 >= 0):
+            found_b = False
+            x = starting_pos_i + 1
+            while x < dim_rows:
+                cell = occupation_base[x][starting_pos_j - 1]
+                if found_b:
+                    visibility_matrix[x][starting_pos_j - 1] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[x][starting_pos_j - 1] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[x][starting_pos_j - 1] = can_see
+                x += 1
+
+        # sets the visibility for all cells that are in the next column and below the given input cell
+        if (starting_pos_i + 1 < dim_rows and starting_pos_j + 1 < dim_rows):
+            found_b = False
+            x = starting_pos_i + 1
+            while x < dim_rows:
+                cell = occupation_base[x][starting_pos_j + 1]
+                if found_b:
+                    visibility_matrix[x][starting_pos_j + 1] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[x][starting_pos_j + 1] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[x][starting_pos_j + 1] = can_see
+                x += 1
+
+        # sets the visibility for all cells that are in the previous row and to the right of the input cell
+        if (starting_pos_i -1 >= 0 and starting_pos_j + 1 < dim_cols):
+            x = starting_pos_j + 1
+            found_b = False
+            while x < dim_cols:
+                cell = occupation_base[starting_pos_i - 1][x]
+                if found_b:
+                    visibility_matrix[starting_pos_i - 1][x] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[starting_pos_i - 1][x] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[starting_pos_i - 1][x] = can_see
+                x += 1
+
+        # sets the visibility for all cells that are in the next row and to the right of the input cell
+        if (starting_pos_i + 1 < dim_rows and starting_pos_j + 1 < dim_rows):
+            x = starting_pos_j + 1
+            found_b = False
+            while x < dim_cols:
+                cell = occupation_base[starting_pos_i + 1][x]
+                if found_b:
+                    visibility_matrix[starting_pos_i + 1][x] = not_see
+                else:
+                    if cell == -1:
+                        visibility_matrix[starting_pos_i + 1][x] = not_see
+                        found_b = True
+                    if cell == 1 or cell == 0:
+                        visibility_matrix[starting_pos_i + 1][x] = can_see
+                x += 1
 
         return np.array(visibility_matrix)
 
-
+    # function that given all the single visibility matrix creates the complete visibility matrix
     def create_complete_visibility(self, occupation_matrix):
         complete_visibility = []
         rows = occupation_matrix.shape[0]
@@ -140,17 +256,13 @@ class Visibility(Matrix):
         complete_visibility = np.array(complete_visibility)
         return complete_visibility
 
+
 class Occupation(Matrix):
 
     def __init__(self, rows, cols):
         super().__init__(rows, cols)
 
-    # non funziona, ma sarebbe carino per impostare il massimo numero di
-    def max_cars(self):
-        matrix = Occupation.create_occupation_matrix()
-        value = np.count_nonzero(matrix == road)
-        return value/3 # a caso
-
+    # function that inserts the number of cars into the occupancy matrix
     def insert_cars(self, matrix, num_cars):
         tmp = matrix.tolist()
         positions = []
@@ -159,25 +271,22 @@ class Occupation(Matrix):
             j = random.randint(0, self.cols-1)
             if tmp[i][j] == road:
                 tmp[i][j] = car
-                #l'indice definisce la macchina
-                # es. indice 0 => coordinate della posizione della car 0
                 positions.append([i,j])
                 num_cars = num_cars - 1
         return np.array(tmp), positions
 
+    # function that creates the occupation matrix, given the number of rows and columns
     def create_occupation_matrix(self):
         matrix = [[buildings] * self.cols for _ in range(self.rows)]
         start = True
         count = 0
         i = 0
         while i < self.rows:
-            #print(" i = ", i, "\n")
             if i == 0 or start:
-                # creo la prima riga
+                # create the first row
                 create_row = []
                 first_block = False
                 second_block = False
-                # creo la riga
                 for j in range(self.cols):
                     value = buildings
                     num = random.randint(buildings, road)
@@ -218,12 +327,10 @@ class Occupation(Matrix):
                     matrix[i][j] = row[j]
 
                 count = random.randint(1, round(self.rows / 2))
-                #print("count", count)
                 start = False
             else:
                 if count > 0:
                     while count > 0:
-                        #print("sto facendo la riga di indice", i, "con count che vale",count ,"e n vale ",n)
                         if i >= self.rows:
                             break
                         else:
@@ -235,7 +342,6 @@ class Occupation(Matrix):
                     count = 0
                     ones = 0
                     while ones < 2:
-                        #print("sto facendo la riga di indice", i, "con ones che vale",ones ,"e n vale ", n)
                         if ones > self.rows:
                             break
                         else:
@@ -248,7 +354,6 @@ class Occupation(Matrix):
                             i += 1
                 i = i - 1
                 start = True
-            i += 1
-            #print("\n",np.array(matrix), "\n---------------\n")
+            i += 1            
 
         return np.array(matrix)
